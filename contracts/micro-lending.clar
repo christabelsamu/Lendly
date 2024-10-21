@@ -203,3 +203,21 @@
 
     (ok true))
 )
+
+;; Read-only Functions
+(define-read-only (get-loan (loan-id uint))
+    (map-get? loans loan-id)
+)
+
+(define-read-only (get-user-reputation (user principal))
+    (default-to
+        {
+            loans-paid: u0,
+            loans-defaulted: u0,
+            lending-score: u50,
+            total-borrowed: u0,
+            total-lent: u0
+        }
+        (map-get? user-reputation user)
+    )
+)
