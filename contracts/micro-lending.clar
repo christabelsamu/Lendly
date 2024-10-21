@@ -108,3 +108,45 @@
     (var-set loan-nonce loan-id)
     (ok loan-id))
 )
+
+(define-public (fund-loan (loan-id uint))
+    (let (
+        (loan (unwrap! (map-get? loans loan-id) err-not-found))
+        (amount (get amount loan))
+    )
+    (asserts! (is-eq (get status loan) "CREATED") err-loan-exists)
+    (asserts! (>= (stx-get-balance tx-sender) amount) err-insufficient-balance)
+
+    ;; Transfer loan amount to borrower
+    (try! (stx-transfer? amount tx-sender (get borrower loan)))
+
+    ;; Update loan status
+    (map-set loans loan-id
+        (merge loan {
+            lender: tx-sender,
+            start-block: block-height,
+            status: "ACTIVE"
+        })
+    )
+
+    ;; Update lender reputation
+    (let (
+        (current-rep (default-to
+            {
+                loans-paid: u0,
+                loans-defaulted: u0,
+                lending-score: u50,
+                total-borrowed: u0,
+                total-lent: u0
+            }
+            (map-get? user-reputation tx-sender)
+        ))
+    )
+    (map-set user-reputation tx-sender
+        (merge current-rep {
+            total-lent: (+ (get total-lent current-rep) amount)
+        })
+    ))
+
+    (ok true))
+)
