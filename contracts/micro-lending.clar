@@ -150,3 +150,31 @@
 
     (ok true))
 )
+
+(define-public (repay-loan (loan-id uint))
+    (let (
+        (loan (unwrap! (map-get? loans loan-id) err-not-found))
+        (repayment-amount (calculate-repayment-amount loan-id))
+    )
+    (asserts! (is-eq (get borrower loan) tx-sender) err-unauthorized)
+    (asserts! (is-eq (get status loan) "ACTIVE") err-not-found)
+    (asserts! (>= (stx-get-balance tx-sender) repayment-amount) err-insufficient-balance)
+
+    ;; Transfer repayment to lender
+    (try! (stx-transfer? repayment-amount tx-sender (get lender loan)))
+
+    ;; Return collateral to borrower
+    (try! (as-contract (stx-transfer? (get collateral loan) tx-sender (get borrower loan))))
+
+    ;; Update loan status
+    (map-set loans loan-id
+        (merge loan {
+            status: "REPAID"
+        })
+    )
+
+    ;; Update reputations
+    (update-reputation (get borrower loan) true)
+
+    (ok true))
+)
