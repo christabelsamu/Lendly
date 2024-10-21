@@ -42,3 +42,13 @@
 )
 
 (define-data-var loan-nonce uint u0)
+
+;; Private Functions
+(define-private (calculate-repayment-amount (loan-id uint))
+    (let (
+        (loan (unwrap! (map-get? loans loan-id) (err u101)))
+        (interest-amount (/ (* (get amount loan) (get interest-rate loan)) u1000))
+    )
+    (+ (get amount loan) interest-amount))
+)
+
