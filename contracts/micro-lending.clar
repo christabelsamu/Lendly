@@ -14,3 +14,31 @@
 ;; Data Variables
 (define-data-var minimum-loan-amount uint u1000000) ;; in micro STX (1 STX)
 (define-data-var platform-fee-rate uint u10) ;; 1% represented as 10/1000
+
+;; Data Maps
+(define-map user-reputation
+    principal
+    {
+        loans-paid: uint,
+        loans-defaulted: uint,
+        lending-score: uint,
+        total-borrowed: uint,
+        total-lent: uint
+    }
+)
+
+(define-map loans
+    uint
+    {
+        borrower: principal,
+        lender: principal,
+        amount: uint,
+        interest-rate: uint,
+        duration: uint,
+        start-block: uint,
+        status: (string-ascii 20),
+        collateral: uint
+    }
+)
+
+(define-data-var loan-nonce uint u0)
