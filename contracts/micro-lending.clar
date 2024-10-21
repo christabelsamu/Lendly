@@ -178,3 +178,28 @@
 
     (ok true))
 )
+
+(define-public (claim-defaulted-loan (loan-id uint))
+    (let (
+        (loan (unwrap! (map-get? loans loan-id) err-not-found))
+        (loan-end-height (+ (get start-block loan) (get duration loan)))
+    )
+    (asserts! (is-eq (get lender loan) tx-sender) err-unauthorized)
+    (asserts! (is-eq (get status loan) "ACTIVE") err-not-found)
+    (asserts! (>= block-height loan-end-height) err-loan-not-due)
+
+    ;; Transfer collateral to lender
+    (try! (as-contract (stx-transfer? (get collateral loan) tx-sender (get lender loan))))
+
+    ;; Update loan status
+    (map-set loans loan-id
+        (merge loan {
+            status: "DEFAULTED"
+        })
+    )
+
+    ;; Update reputations
+    (update-reputation (get borrower loan) false)
+
+    (ok true))
+)
