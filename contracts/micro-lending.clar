@@ -52,3 +52,31 @@
     (+ (get amount loan) interest-amount))
 )
 
+(define-private (update-reputation (user principal) (paid bool))
+    (let (
+        (current-rep (default-to
+            {
+                loans-paid: u0,
+                loans-defaulted: u0,
+                lending-score: u50,
+                total-borrowed: u0,
+                total-lent: u0
+            }
+            (map-get? user-reputation user)
+        ))
+    )
+    (if paid
+        (map-set user-reputation user
+            (merge current-rep {
+                loans-paid: (+ (get loans-paid current-rep) u1),
+                lending-score: (min u100 (+ (get lending-score current-rep) u10))
+            })
+        )
+        (map-set user-reputation user
+            (merge current-rep {
+                loans-defaulted: (+ (get loans-defaulted current-rep) u1),
+                lending-score: (max u0 (- (get lending-score current-rep) u20))
+            })
+        )
+    ))
+)
