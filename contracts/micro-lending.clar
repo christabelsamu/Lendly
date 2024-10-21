@@ -80,3 +80,31 @@
         )
     ))
 )
+
+;; Public Functions
+(define-public (create-loan (amount uint) (interest-rate uint) (duration uint) (collateral uint))
+    (let (
+        (loan-id (+ (var-get loan-nonce) u1))
+    )
+    (asserts! (>= amount (var-get minimum-loan-amount)) err-invalid-amount)
+    (asserts! (>= (stx-get-balance tx-sender) collateral) err-insufficient-balance)
+
+    ;; Transfer collateral to contract
+    (try! (stx-transfer? collateral tx-sender (as-contract tx-sender)))
+
+    ;; Create loan
+    (map-set loans loan-id {
+        borrower: tx-sender,
+        lender: tx-sender,
+        amount: amount,
+        interest-rate: interest-rate,
+        duration: duration,
+        start-block: u0,
+        status: "CREATED",
+        collateral: collateral
+    })
+
+    ;; Update nonce
+    (var-set loan-nonce loan-id)
+    (ok loan-id))
+)
